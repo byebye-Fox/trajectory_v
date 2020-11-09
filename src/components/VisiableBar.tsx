@@ -1,8 +1,10 @@
 import React from 'react'
-import {Menu , Dropdown , Switch, Checkbox} from 'antd'
-import { DownOutlined } from '@ant-design/icons'
+import {Menu , Dropdown , Switch, Button} from 'antd'
 //@ts-ignore
 import $ from 'jquery'
+
+
+import  {TagsOutlined}  from '@ant-design/icons'
 
 interface VisiableBarProps {
     idlist:Array<string>
@@ -30,7 +32,7 @@ class VisiableBar extends React.Component<VisiableBarProps , VisiableBarProps>
     _addEle= (value:any , index:any)=>{
         return <Menu.Item key={index}>{value} <Switch defaultChecked onChange ={function(){
             let selectid = '#' + value
-             if (!$(selectid).attr('opacity')){
+            if (!$(selectid).attr('opacity')){
                 $(selectid).attr('opacity' , 0)
             }
             else if($(selectid).attr('opacity')=== '1'){
@@ -44,7 +46,9 @@ class VisiableBar extends React.Component<VisiableBarProps , VisiableBarProps>
     buildMenu = (idList:Array<string>) =>{
         console.log("the function")
         console.log(this._genElement(idList))
-        return <Menu>{this._genElement(idList)}</Menu>
+        let themenu =  <Menu>{this._genElement(idList)}</Menu>
+
+        return <Dropdown overlay={themenu} arrow ><TagsOutlined /></Dropdown>
     }
 
     render(){

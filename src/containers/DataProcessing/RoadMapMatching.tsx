@@ -27,8 +27,6 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
         .then(res =>{   
             //@ts-ignore
             let setlist = eval(res.data.datalist)
-            console.log(typeof(setlist))
-            console.log(setlist)
             this.setState({
                 datasets:setlist
             })
@@ -63,31 +61,49 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
             })
             let reslines = eval(res.data)
             let resline:any = []
-            for (let i = 0 ; i < reslines.length ; i++)
-            {
-                let message = ""
-                if(i === 0 )
-                {
-                    message = "Raw Data Trajectory"
-                }
-                else if(i ===1)
-                {
-                    message = "Ori Data Trajectory"
-                }
-                else{
-                    message = "Road Map Matching"
-                }
-                resline.push({
-                    polylines:[reslines[i]],
-                    data:message 
-              })
+            let len1 = reslines[0].length
+            let len2 = reslines[1].length
+            let len3 = reslines[2].length
+
+            let tempres1:any = []
+            let tempres2:any = []
+            let tempres3:any = []
+        
+            for(let i = 0 ; i < reslines[0].length ; i++)
+            {   
+                tempres1.push({latlng:[reslines[0][i][0] , reslines[0][i][1]] , attribute:5})
             }
 
-            let resultshow = <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={resline}></MapContainer>   
+            for(let i = 0 ; i < reslines[1].length ; i++)
+            {   
+                tempres2.push({latlng:[reslines[1][i][0] , reslines[1][i][1]] , attribute:5})
+            }
+
+            resline.push({
+                markers:tempres1,
+                data:"This is the raw data",
+                name:"test1",
+                markerstyle:"circle",
+                markerfill:"red"
+            })
+            resline.push({
+                markers:tempres2,
+                data:"this is the second data",
+                name:"test2",
+                markerstyle:"circle",
+                markerfill:"green"
+            })
+
+            resline.push({
+                polylines:[reslines[2]],
+                data:"this is the third"
+            })
+       
+
+            let resultshow = <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={resline}></MapContainer> 
             ReactDOM.render(resultshow ,document.getElementById("resultshow") )          
             console.log(resline)
         })
-
 
     }
 
