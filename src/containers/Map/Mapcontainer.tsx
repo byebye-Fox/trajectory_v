@@ -7,13 +7,20 @@ import {LMap , MapProps} from "../../components/LMap"
 import DetailDraw from '../DetailDraw'
 import VisiableBar from '../../components/VisiableBar'
 
-interface layerDetail{
-    markers?:Array<[string,number,number]>;
-    polylines?:Array<Array<[number,number]>>;
-    data?:any;
+
+interface gridsDetail{
+    lefttop:{lat:number , lng:number}
+    offsetlat:number;
+    offsetlng:number;
+    netdatas:Array<Array<number>>;
+    color0:[number , number , number];
+    color1:[number , number , number];
+    opacity:number;
+    
 }
+
 interface newProps extends MapProps{
-    idlist:Array<string>
+    idlist:Array<[string,boolean]>
 }
 
 interface MapcontaionerProps{
@@ -24,15 +31,15 @@ interface MapcontaionerProps{
 }
 //markers:firt string,the popup stuff,use the html element;second:纬度,third:经度
 
-export class MapContainer extends React.Component<MapcontaionerProps,newProps>{
-    constructor(props:MapcontaionerProps){
+export class MapContainer extends React.Component<MapProps,newProps>{
+    constructor(props:MapProps){
         super(props)
         this.state = {
             container:props.container,
             center:props.center,
             zoom:props.zoom,
             mapData:props.mapData,
-            idlist:["test1layer0","test2layer1"]
+            idlist:[["test1layer0",true],["test2layer1" , true] , ["rectForTest",true]]
         }
     }
     static getDerivedStateFromProps(nextProps:any , prevState:any){
@@ -61,13 +68,11 @@ export class MapContainer extends React.Component<MapcontaionerProps,newProps>{
             <div className="relativeeles">
                 <VisiableBar idlist = {this.state.idlist}></VisiableBar>
                 <DetailDraw/>
+            </div>
                 <div id = {this.state.container} className="Mapcontaioner">
-                <a href='http://127.0.0.1:8080'>the jump</a>
-            </div>
-                
-                
+                    <a href='http://127.0.0.1:8080'>the jump</a>
+                </div>
                 <LMap center={this.state.center} zoom={this.state.zoom} container={this.state.container} mapData={this.state.mapData}/>
-            </div>
             </>
                 
             

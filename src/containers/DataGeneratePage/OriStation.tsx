@@ -37,7 +37,6 @@ class OriStation extends React.Component{
                     <Col offset = {2} span={20}>
                          <Card className="height100row">
                             <FormWithCheck name="oridatageneration" label="Number of the Vehicles" axiosRequest="http://127.0.0.1:8000/oridatastation"></FormWithCheck>
-                            <VisiableBar  idlist = {['rectForTest','circlesForTest']}></VisiableBar>
                             {/* <MapContainer center={[22.53500,114.007]} zoom={14} container="oriStationDes" mapData={this.getMapdata(this.datas)}></MapContainer> */}
                              </Card>
                     </Col>

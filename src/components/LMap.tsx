@@ -31,16 +31,25 @@ interface layerDetail{
     markerfill?:string;
     markerclick?:Function;
 
-
-
     polylines?:Array<Array<[number,number]>>;
     polylinestyle?:string;
+    polylinesfill?:string;
+    polylinesclick?:Function;
+
+    grids?:Array<gridsDetail>;
     name?:any;
 }
 //markers:firt string,the popup stuff,use the html element;second:纬度,third:经度
 
-interface gridsDetail{
-
+export interface gridsDetail{
+    lefttop:{lat:number , lng:number}
+    offsetlat:number;
+    offsetlng:number;
+    netdatas:Array<Array<number>>;
+    color0:Array<number>;
+    color1:Array<number>;
+    opacity:number;
+    
 }
 interface aggregationDetail{
 }
@@ -53,7 +62,7 @@ export interface MapProps{
 
     mapData?:Array<layerDetail>;
     //基础地图数据
-    grids?:Array<gridsDetail>;
+    
     aggregation?:Array<aggregationDetail>;
     polylinesClick?:Function;
     PolylinesDbclick?:Function;
@@ -105,34 +114,9 @@ export class LMap extends React.Component<MapProps,MapProps>{
 
 }
 
-function drawmarkers(markers:Array<[string,number,number]>){
-    let thelayer = new L.LayerGroup();
-    var reactIcon = L.icon({
-        iconUrl:EnvironmentFilled,
-        iconSize:[50,50]
-    })
-
-    var reactIcon2 = L.icon({
-        iconUrl:EnvironmentFilled,
-        iconSize:[30,30]
-    })
-
-    for(let i = 0 ; i < markers.length ; i ++)
-    {
-        let lnglat = [markers[i][1],markers[i][2]]
-        let the_marker = L.marker(lnglat,{icon:reactIcon}).bindPopup('<EnvironmentFilled />').addTo(thelayer)
-        the_marker.on("click" , function(e : any){
-            the_marker.remove();
-            the_marker = L.marker(lnglat,{icon:reactIcon2}).bindPopup('<EnvironmentFilled />').addTo(thelayer)
-        })   
-    }
-    return thelayer;
-}
 
 function _drawmaker(markers:Array<MarkerProps> , markerstyle:string,markerfill:string , svg:any , g:any , mymap:any )
 {
-    let len = markers.length
-   
     switch(markerstyle){
         case("image"):{
 
@@ -154,39 +138,81 @@ function _drawmaker(markers:Array<MarkerProps> , markerstyle:string,markerfill:s
                 .attr("r", function(d:any) { return d.radius; })
                 .style("fill", function(d:any) { return d.color; });
         }
-}
-}
-
-
-function drawlines(lines:Array<Array<[number,number]>> , colorindex:number){
-    let colors = [
-        ["#330099" , "#66ff66"],
-        ["#4876FF" , "#FFFFFF"],
-        ["#ff0000" , "#ffff00"],
-    ]
-    
-    let thelayer = new L.LayerGroup();
-    for(let i = 0 ; i <lines.length; i ++)
-    {   
-        let thepath = antPath(lines[i] , {
-            "delay": 800,
-            "dashArray": [
-                10,
-                40
-            ],
-            "weight": 4,
-            "color": colors[colorindex][0],
-            "pulseColor":colors[colorindex][1],
-            "paused": false,
-            "reverse": false,
-            "hardwareAccelerated": false
-        }).addTo(thelayer)
-
-        thepath.on("click",function(e:any){
-            alert(lines)
-        })
     }
-    return thelayer;
+
+    function adjustCircle() {
+        g.selectAll("circle")
+            .attr('cx', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).x)
+            .attr('cy', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).y);
+    }
+
+    //鼠标缩放操作
+    function onMapZoom() {
+        adjustCircle();
+    }
+    
+    mymap.on('zoom', onMapZoom);
+}
+
+function _drawlines(lines:Array<Array<[number , number]>>, polylinestyle:string , polylinesfill:string , svg:any , g:any , mymap:any){
+    switch (polylinestyle){
+        case("lines"):{
+            let len = lines.length
+            let jsonPath = new Array()
+
+
+            for(let i = 0 ; i <len ; i++)
+            {
+                let element = lines[i]
+                jsonPath.push({
+                    "line":element,
+                    "color":polylinesfill
+                })
+            }
+
+            var t = g.selectAll("path")
+            .data(jsonPath);
+            var circleAttributes =
+                t
+                .enter()
+                .append("path")
+                .attr("d", function(d:any) { 
+                    let templatlng = mymap.latLngToLayerPoint(L.latLng(d.line[0][0], d.line[0][1]));
+                    let linedes = "M" + templatlng.x + " " + templatlng.y
+                    for(let i =1 ; i < d.line.length ; i++ )
+                    {
+                        let temp = mymap.latLngToLayerPoint(L.latLng(d.line[i][0], d.line[i][1]));
+                        linedes= linedes + "L" + temp.x + " " + temp.y
+                    }
+                    return linedes
+                })
+                .attr("stroke", function(d:any) { return d.color;})
+                .attr("stroke-width" , "10") 
+                .attr("fill" ,"none")
+            }
+        }
+
+    function adjustCircle() {
+        
+        g.selectAll("path")
+            .attr('d', function (d:any){
+                let templatlng = mymap.latLngToLayerPoint(L.latLng(d.line[0][0], d.line[0][1]));
+                let linedes = "M" + templatlng.x + " " + templatlng.y
+                for(let i =1 ; i < d.line.length ; i++ )
+                {
+                    let temp = mymap.latLngToLayerPoint(L.latLng(d.line[i][0], d.line[i][1]));
+                    linedes= linedes + "L" + temp.x + " " + temp.y
+                }
+                return linedes
+            })
+    }
+
+    //鼠标缩放操作
+    function onMapZoom() {
+        adjustCircle();
+    }
+    
+    mymap.on('zoom', onMapZoom);
 }
 
 function _drawMap(Props:MapProps , mymap:any) {
@@ -212,105 +238,42 @@ function _drawMap(Props:MapProps , mymap:any) {
         zoomOutTitle: 'Zoom out'
     }).addTo(mymap);
 
-    console.log("mapdata") 
-    console.log(Props.mapData)
+    console.log("Props") 
+    console.log(Props)
     if(Props.mapData){
         for(let i = 0; i <Props.mapData.length ; i ++)
         {
             let onelayer = Props.mapData[i]
             if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
             {
-                var theone = D3Container(mymap , (onelayer.name + "layer" + i))
-                var svg = theone[0]
-                var g = theone[1]
+                let theone = D3Container(mymap , (onelayer.name + "layer" + i))
+                let svg = theone[0]
+                let g = theone[1]
 
                 _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
             }
-   
+            if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
+            {
+                let theone = D3Container(mymap , (onelayer.name + "layer" + i))
+                let svg = theone[0]
+                let g = theone[1]
+                
+                _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
+            }
+            if(onelayer.grids)
+            {
+                for(let i = 0 ; i < onelayer.grids.length ; i++)
+                {
+                    DrawRectSets(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
+                        onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity)
+                }
+                
+            }
+
         }
     }
-    function adjustCircle() {
-        d3.selectAll("circle")
-            .attr('cx', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).x)
-            .attr('cy', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).y);
-    }
-    //鼠标缩放操作
-    function onMapZoom() {
-        adjustCircle();
-    }
-    mymap.on('zoom', onMapZoom);
-
+    // DrawNet("11" , "123" ,mymap)
     return mymap
-
-
-}
-
-
-function DrawNet(data:any , style:any , mymap:any)
-{
-    let circleData = [
-        {"lat" : "22.5338071" , "lng" : "114.0116598"},
-        {"lat": "22.5338873" , "lng" :"114.0107086" }
-    ]
-    let lefttop = {"lat" :22.569486 , "lng" : 113.9403}
-    let offsetlat =0.003
-    let offsetlng = 0.004
-
-    var netData = new Array(100)
-    for(var i = 0 ; i <100 ;i++)
-    {
-        netData[i] = new Array(100)
-    }
-    for(let i = 0 ; i <100 ; i++)
-    {
-        for(let j = 0 ; j < 100 ; j++)
-        {
-            netData[i][j] = Math.random()
-        }
-    }
-
-//    DrawCircle(circleData , mymap)
-//    DrawRectSets(netData , mymap , lefttop , offsetlat , offsetlng)
-}
-
-function DrawCircle(rectData : any , mymap:any)
-{   
-    var theone = D3Container(mymap , "circlesForTest")
-    
-    var svg = theone[0]
-    var g = theone[1]
-
-    var jsonCircles = new Array();
-    rectData.forEach(function(d:any) {
-        jsonCircles.push({ "x_axis": d.lat, "y_axis": d.lng, "radius": 50, "color": "green" });
-    });
-
-    var t = g.selectAll("circle")
-        .data(jsonCircles);
-    var circleAttributes =
-        t
-        .enter()
-        .append("circle")
-        .attr("cx", function(d:any) {  return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).x; })
-        .attr("cy", function(d:any) { return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).y; })
-        .attr("r", function(d:any) { return d.radius; })
-        .style("fill", function(d:any) { return d.color; });
-
-    function adjustCircle() {
-        d3.selectAll("circle")
-            .attr('cx', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).x)
-            .attr('cy', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).y);
-    }
-    //鼠标缩放操作
-    function onMapZoom() {
-        adjustCircle();
-    }
-    mymap.on('zoom', onMapZoom);
-    d3.selectAll("circle").on('click' , function(d:any){
-        console.log(d)
-        svg.style('filter', 'url(#filterBlur')
-    })
-   
 }
 
 function D3Container(mymap :any , id:string){
@@ -353,17 +316,11 @@ function D3Container(mymap :any , id:string){
     return [svg,g]
 }
 
-function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number , offsetlng:number){
-    function color16(){//十六进制颜色随机
-        var r = Math.floor(Math.random()*256);
-        var g = Math.floor(Math.random()*256);
-        var b = Math.floor(Math.random()*256);
-        var color = '#'+r.toString(16)+g.toString(16)+b.toString(16);
-        return color;
-    }
-    
-    var a = d3.rgb(0,0,0)                 //红色
-    var b = d3.rgb(255,255,255)                 //绿色
+function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number , offsetlng:number ,
+    color0:Array<number> , color1:Array<number> , opacity:number){
+
+    var a = d3.rgb(color0[0],color0[1] , color0[2])                 //红色
+    var b = d3.rgb(color1[0] , color1[1] , color1[2])                 //绿色
     var compute = d3.interpolate(a,b)
 
 
@@ -413,6 +370,7 @@ function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number 
         // .style("fill-opacity"  , 0)
         .style('stroke',function(d:any) { return d.color;})
         .style('stroke-width',2)
+        .style('opacity' , opacity)
 
     function adjustCircle() {
         let baseXY = mymap.latLngToLayerPoint([lefttop.lat , lefttop.lng])
@@ -500,4 +458,92 @@ function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number 
     // })
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function drawlines(lines:Array<Array<[number,number]>> , colorindex:number){
+    let colors = [
+        ["#330099" , "#66ff66"],
+        ["#4876FF" , "#FFFFFF"],
+        ["#ff0000" , "#ffff00"],
+    ]
+    
+    let thelayer = new L.LayerGroup();
+    for(let i = 0 ; i <lines.length; i ++)
+    {   
+        let thepath = antPath(lines[i] , {
+            "delay": 800,
+            "dashArray": [
+                10,
+                40
+            ],
+            "weight": 4,
+            "color": colors[colorindex][0],
+            "pulseColor":colors[colorindex][1],
+            "paused": false,
+            "reverse": false,
+            "hardwareAccelerated": false
+        }).addTo(thelayer)
+
+        thepath.on("click",function(e:any){
+            alert(lines)
+        })
+    }
+    return thelayer;
+}
+
+function drawmarkers(markers:Array<[string,number,number]>){
+    let thelayer = new L.LayerGroup();
+    var reactIcon = L.icon({
+        iconUrl:EnvironmentFilled,
+        iconSize:[50,50]
+    })
+
+    var reactIcon2 = L.icon({
+        iconUrl:EnvironmentFilled,
+        iconSize:[30,30]
+    })
+
+    for(let i = 0 ; i < markers.length ; i ++)
+    {
+        let lnglat = [markers[i][1],markers[i][2]]
+        let the_marker = L.marker(lnglat,{icon:reactIcon}).bindPopup('<EnvironmentFilled />').addTo(thelayer)
+        the_marker.on("click" , function(e : any){
+            the_marker.remove();
+            the_marker = L.marker(lnglat,{icon:reactIcon2}).bindPopup('<EnvironmentFilled />').addTo(thelayer)
+        })   
+    }
+    return thelayer;
+}
 export default  LMap

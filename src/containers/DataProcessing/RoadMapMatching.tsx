@@ -95,11 +95,54 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
             })
 
             resline.push({
+                data:"this is the second data",
+                name:"test3",
                 polylines:[reslines[2]],
-                data:"this is the third"
+                polylinestyle:"lines",
+                polylinesfill:"red",
             })
-       
 
+            let lefttop = {"lat" :22.569486 , "lng" : 113.9403}
+            let offsetlat =0.003
+            let offsetlng = 0.004
+
+            var netData:Array<Array<number>> = new Array(100)
+            for(var i = 0 ; i <100 ;i++)
+            {
+                netData[i] = new Array(100)
+            }
+            for(let i = 0 ; i <100 ; i++)
+            {
+                for(let j = 0 ; j < 100 ; j++)
+                {
+                    netData[i][j] = Math.random()
+                }
+            }
+
+            let lefttop2 = {
+                "lat" :24.569486 , "lng" : 115.9403
+            }
+            let grids = [{
+                lefttop:lefttop,
+                offsetlat:offsetlat,
+                offsetlng:offsetlng,
+                netdatas:netData,
+                color0:[0,0,0],
+                color1:[245,234,123],
+                opacity:0.5
+            },
+            {
+                lefttop:lefttop2,
+                offsetlat:offsetlat,
+                offsetlng:offsetlng,
+                netdatas:netData,
+                color0:[1,2,3],
+                color1:[23,234,123],
+                opacity:0.5
+            },
+            ]   
+
+            resline.push({'grids':grids})
             let resultshow = <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={resline}></MapContainer> 
             ReactDOM.render(resultshow ,document.getElementById("resultshow") )          
             console.log(resline)

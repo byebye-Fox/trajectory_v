@@ -59,8 +59,7 @@ class SelfChargeStation extends React.Component{
                          <Card className="height100row"> 
                             This is SelfChargeStation
                             <Button onClick= {this.onclickgetpol}> get file</Button>
-                            <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={this.state.theline}></MapContainer>            
-                        </Card>
+                              </Card>
                     </Col>
 
                 </Row> 
