@@ -19,6 +19,7 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
         
     }
 
+
     componentDidMount(){
         axios({
             url:'http://127.0.0.1:8000/getsetlist/',
@@ -119,6 +120,7 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 }
             }
 
+
             let lefttop2 = {
                 "lat" :24.569486 , "lng" : 115.9403
             }
@@ -129,7 +131,7 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 netdatas:netData,
                 color0:[0,0,0],
                 color1:[245,234,123],
-                opacity:0.5
+                opacity:0.5,
             },
             {
                 lefttop:lefttop2,
@@ -138,11 +140,10 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 netdatas:netData,
                 color0:[1,2,3],
                 color1:[23,234,123],
-                opacity:0.5
+                opacity:0.5,
             },
             ]   
-
-            resline.push({'grids':grids})
+            resline.push({'grids':grids ,name:"thegrids"})
             let resultshow = <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={resline}></MapContainer> 
             ReactDOM.render(resultshow ,document.getElementById("resultshow") )          
             console.log(resline)

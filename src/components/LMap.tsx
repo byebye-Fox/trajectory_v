@@ -36,8 +36,10 @@ interface layerDetail{
     polylinesfill?:string;
     polylinesclick?:Function;
 
+    aggregation?:Array<aggregationDetail>;
     grids?:Array<gridsDetail>;
-    name?:any;
+
+    name:any;
 }
 //markers:firt string,the popup stuff,use the html element;second:纬度,third:经度
 
@@ -48,10 +50,19 @@ export interface gridsDetail{
     netdatas:Array<Array<number>>;
     color0:Array<number>;
     color1:Array<number>;
-    opacity:number;
-    
+    opacity:number; 
 }
-interface aggregationDetail{
+interface aggregationDetail{   
+    aggredata:Array<{
+        lat:number;
+        lng:number;
+        count:number
+    }>;
+    radius:number;
+    color0:Array<number>;
+    color1:Array<number>;
+    opacity:number;
+
 }
 
 export interface MapProps{
@@ -62,14 +73,19 @@ export interface MapProps{
 
     mapData?:Array<layerDetail>;
     //基础地图数据
-    
-    aggregation?:Array<aggregationDetail>;
-    polylinesClick?:Function;
-    PolylinesDbclick?:Function;
-
 }
 
-export class LMap extends React.Component<MapProps,MapProps>{
+export interface MapStates{
+    container:string;
+    center:[number,number];
+    zoom:number;
+    //基础,进行地图展示所需要的基础类型,需要容器,中心点,zoom等级
+
+    mapData?:Array<layerDetail>;
+}
+
+
+export class LMap extends React.Component<MapProps,MapStates>{
     constructor(Props:MapProps){
         super(Props);
         this.state = {
@@ -83,10 +99,12 @@ export class LMap extends React.Component<MapProps,MapProps>{
 
     controlBar:any;
     
+    layerlist:any=[];
+    
+
     componentDidMount()
     {
-       this.mymap =  _drawMap(this.state , this.mymap)
-     
+       this.mymap =  _drawMap(this.props , this.mymap)
     }
 
     static getDerivedStateFromProps(nextProps:any , prevState:any){
@@ -102,7 +120,8 @@ export class LMap extends React.Component<MapProps,MapProps>{
     }
     componentDidUpdate(){
         this.mymap.remove()
-        this.mymap = _drawMap(this.state , this.mymap)
+        this.mymap = _drawMap(this.props , this.mymap)
+        // this.props.sendidlist(this.layerlist)
     }
 
      render()
@@ -113,7 +132,6 @@ export class LMap extends React.Component<MapProps,MapProps>{
     }
 
 }
-
 
 function _drawmaker(markers:Array<MarkerProps> , markerstyle:string,markerfill:string , svg:any , g:any , mymap:any )
 {
@@ -217,10 +235,8 @@ function _drawlines(lines:Array<Array<[number , number]>>, polylinestyle:string 
 
 function _drawMap(Props:MapProps , mymap:any) {
     var normalm = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',{
-            attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-            '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-            'Imagery © <a href="http://mapbox.com">Mapbox</a>',
             id: 'mapbox.streets', 
+            style: 'mapbox://styles/mapbox/streets-v12',
             maxZoom: Props.zoom+3,
             minZoom: Props.zoom/2
         })
@@ -244,36 +260,131 @@ function _drawMap(Props:MapProps , mymap:any) {
         for(let i = 0; i <Props.mapData.length ; i ++)
         {
             let onelayer = Props.mapData[i]
-            if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
-            {
                 let theone = D3Container(mymap , (onelayer.name + "layer" + i))
                 let svg = theone[0]
                 let g = theone[1]
-
+            if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
+            {
                 _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
             }
             if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
             {
-                let theone = D3Container(mymap , (onelayer.name + "layer" + i))
-                let svg = theone[0]
-                let g = theone[1]
-                
                 _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
             }
             if(onelayer.grids)
             {
                 for(let i = 0 ; i < onelayer.grids.length ; i++)
                 {
-                    DrawRectSets(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
-                        onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity)
+                    _drawgrids(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
+                        onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity ,svg,g)
                 }
                 
             }
-
+            if(onelayer.aggregation)
+            {
+                for(let i = 0 ; i < onelayer.aggregation.length ; i++)
+                {   
+                    _drawaggregation(onelayer.aggregation[i].aggredata ,onelayer.aggregation[i].radius ,onelayer.aggregation[i].color0,
+                        onelayer.aggregation[i].color1,onelayer.aggregation[i].opacity,svg,g,mymap)
+                }
+            }
         }
     }
     // DrawNet("11" , "123" ,mymap)
     return mymap
+}
+
+function _drawaggregation( aggredata:Array<{lat:number;lng:number;count:number}>, radius:number, color0:Array<number>,
+    color1:Array<number>, opacity:number,svg:any,g:any , mymap:any){
+    let jsondata = new Array() 
+
+    var a = d3.rgb(color0[0],color0[1] , color0[2])
+    var b = d3.rgb(color1[0] , color1[1] , color1[2])
+    var compute = d3.interpolate(a,b)
+
+    for(let i = 0 ; i < aggredata.length ; i++)
+    {
+        let caculateradius = radius
+        //辐射半径计算需要另行进行计算,其计算方法按下不表,先使用简单的方法进行.
+        jsondata.push({
+            "x_axis":aggredata[i].lat,
+            "y_axis":aggredata[i].lng,
+            "radius":caculateradius,  
+            "fill": compute(aggredata[i].count/100)
+        })
+    }
+
+    var t = g.selectAll('circle').data(jsondata)
+    var rectAttribute =
+        t
+        .enter()
+        .append("circle")
+        .attr("cx", function(d:any) {  return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).x; })
+        .attr("cy", function(d:any) { return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).y; })
+        .attr("r", function(d:any) { return d.radius; })
+        .style("fill", function(d:any,i:any) { return d.fill;});
+
+        var defs = svg.append("defs");
+        // 添加模糊滤镜
+        var filterBlur = defs.append('filter')
+        .attr('id', 'filterBlur')
+        .attr('x', -1.2)
+        .attr('y', -1.2)
+        .attr('width', 4)
+        .attr('height', 4);
+        // 添加辅助滤镜
+        filterBlur.append('feOffset')
+        .attr('result', 'offOut')
+        .attr('in', 'SourceGraphic')
+        .attr('dx', 4)
+        .attr('dy', 5);
+        // 添加模糊滤镜
+        filterBlur.append('feGaussianBlur')
+        .attr('result', 'blurOut')
+        .attr('in', 'SourceGraphic')
+        .attr('stdDeviation', 20);
+        // 添加辅助滤镜
+        filterBlur.append('feBlend')
+        .attr('in', 'SourceGraphic')
+        .attr('in2', 'blurOut')
+        .attr('mode', 'multiply');
+    
+        var defs2 = svg.append("defs")
+        var filterBlur2 = defs2.append("filter")
+        .attr("id" , "filterBlur2")
+        filterBlur2.append("feGaussianBlur")
+        .attr("in" , "SourceGraphic")
+        .attr("stdDeviation" , 20)
+    
+        svg.style('filter', 'url(#filterBlur2')
+
+
+
+        function adjustCircle() {
+            g.selectAll("circle")
+                .attr('cx', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).x)
+                .attr('cy', (o:any) => mymap.latLngToLayerPoint([o.x_axis, o.y_axis]).y);
+        }
+    
+        //鼠标缩放操作
+        function onMapZoom() {
+            adjustCircle();
+        }
+        g.selectAll("circle").on("mouseover" , function(){
+            //@ts-ignore
+            d3.select(this)
+                .attr("r" , function(d:any){return (d.radius+3)})
+                
+        })
+        g.selectAll("circle").on("mouseout" , function(){
+            //@ts-ignore
+            d3.select(this)
+                .attr("r" , function(d:any){return (d.radius)})    
+        })
+        g.selectAll("circle").on("click" , function (){
+            $('#thedetailshow').trigger('click','tetet',"teteteasdf")
+        })
+        mymap.on('zoom', onMapZoom);
 }
 
 function D3Container(mymap :any , id:string){
@@ -316,13 +427,12 @@ function D3Container(mymap :any , id:string){
     return [svg,g]
 }
 
-function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number , offsetlng:number ,
-    color0:Array<number> , color1:Array<number> , opacity:number){
+function _drawgrids(netdatas:any , mymap:any , lefttop:any , offsetlat:number , offsetlng:number ,
+    color0:Array<number> , color1:Array<number> , opacity:number ,svg:any,g:any){
 
-    var a = d3.rgb(color0[0],color0[1] , color0[2])                 //红色
-    var b = d3.rgb(color1[0] , color1[1] , color1[2])                 //绿色
+    var a = d3.rgb(color0[0],color0[1] , color0[2])
+    var b = d3.rgb(color1[0] , color1[1] , color1[2])
     var compute = d3.interpolate(a,b)
-
 
     let result = []
     for(let i = 0 ; i < netdatas.length ; i++){
@@ -338,13 +448,6 @@ function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number 
             })
         }
     }
-    console.log("the result")
-    console.log(result)
-
-    var theone = D3Container(mymap , "rectForTest")
-    
-    var svg = theone[0]
-    var g = theone[1]
 
     let baseXY = mymap.latLngToLayerPoint([lefttop.lat , lefttop.lng])
     console.log([lefttop.lat , lefttop.lng])
@@ -390,72 +493,7 @@ function DrawRectSets(netdatas:any , mymap:any , lefttop:any , offsetlat:number 
     }
     mymap.on('zoom', onMapZoom);
     
-    var defs = svg.append("defs");
-    // 添加模糊滤镜
-    var filterBlur = defs.append('filter')
-    .attr('id', 'filterBlur')
-    .attr('x', -1.2)
-    .attr('y', -1.2)
-    .attr('width', 4)
-    .attr('height', 4);
-    // 添加辅助滤镜
-    filterBlur.append('feOffset')
-    .attr('result', 'offOut')
-    .attr('in', 'SourceGraphic')
-    .attr('dx', 4)
-    .attr('dy', 5);
-    // 添加模糊滤镜
-    filterBlur.append('feGaussianBlur')
-    .attr('result', 'blurOut')
-    .attr('in', 'SourceGraphic')
-    .attr('stdDeviation', 20);
-    // 添加辅助滤镜
-    filterBlur.append('feBlend')
-    .attr('in', 'SourceGraphic')
-    .attr('in2', 'blurOut')
-    .attr('mode', 'multiply');
-
-    var defs2 = svg.append("defs")
-    var filterBlur2 = defs2.append("filter")
-    .attr("id" , "filterBlur2")
-    filterBlur2.append("feGaussianBlur")
-    .attr("in" , "SourceGraphic")
-    .attr("stdDeviation" , 20)
-
-    //  svg.style('filter', 'url(#filterBlur2')
-
-
-    function test1() 
-    {
-     console.log("the no 1")   
-    }
-    function test2()
-    {
-        console.log("the no 2")
-    }
-    let functionlist = [test1 ,test2]
-    function onZoom()
-    {
-        for(let i = 0 ; i < 2 ; i ++ )
-        {
-            functionlist[i]()
-        }
-    }
-    onZoom()
-
-    // g.selectAll("rect").on("click" , function(){
-    //     //@ts-ignore
-    //     d3.select(this)
-    //         // .transition()
-    //         // .duration(500)
-    //         .style('opacity',0)
-    // })
-    // g.selectAll("rect").on("mouseover" , function(){
-    //     //@ts-ignore
-    //     d3.select(this)
-    //         .attr("width" , function(d:any){})
-            
-    // })
+    
 }
 
 

@@ -19,9 +19,6 @@ interface gridsDetail{
     
 }
 
-interface newProps extends MapProps{
-    idlist:Array<[string,boolean]>
-}
 
 interface MapcontaionerProps{
     container:string;
@@ -31,17 +28,18 @@ interface MapcontaionerProps{
 }
 //markers:firt string,the popup stuff,use the html element;second:纬度,third:经度
 
-export class MapContainer extends React.Component<MapProps,newProps>{
-    constructor(props:MapProps){
+export class MapContainer extends React.Component<MapcontaionerProps,MapcontaionerProps>{
+    constructor(props:MapcontaionerProps){
         super(props)
         this.state = {
             container:props.container,
             center:props.center,
             zoom:props.zoom,
             mapData:props.mapData,
-            idlist:[["test1layer0",true],["test2layer1" , true] , ["rectForTest",true]]
         }
     }
+    idlist : Array<[string , boolean]>=[];
+
     static getDerivedStateFromProps(nextProps:any , prevState:any){
         if (nextProps !== prevState){
             return {
@@ -60,19 +58,32 @@ export class MapContainer extends React.Component<MapProps,newProps>{
         console.log(this.state)
     }
 
+    getlayerlist = (layerlist:Array<[string,boolean]>)=>{
+        this.idlist = layerlist
+        console.log("the id list")
+        console.log(this.idlist)
+    }
+
 
     render()
     {
+        let layerlist:Array<[string , boolean]> = []
+        for(let i  = 0 ; i < this.state.mapData.length ; i++)
+        {
+            let onelayer = this.state.mapData[i]
+            layerlist.push([onelayer.name + "layer" + i , true])
+        }
+        this.idlist = layerlist
         return(
             <>
-            <div className="relativeeles">
-                <VisiableBar idlist = {this.state.idlist}></VisiableBar>
-                <DetailDraw/>
-            </div>
+                <div className="relativeeles">
+                        <VisiableBar idlist = {this.idlist} sendidlist = {this.getlayerlist}></VisiableBar>
+                        <DetailDraw/>
+                    </div>    
                 <div id = {this.state.container} className="Mapcontaioner">
                     <a href='http://127.0.0.1:8080'>the jump</a>
                 </div>
-                <LMap center={this.state.center} zoom={this.state.zoom} container={this.state.container} mapData={this.state.mapData}/>
+                <LMap center={this.state.center} zoom={this.state.zoom} container={this.state.container} mapData={this.state.mapData} />
             </>
                 
             

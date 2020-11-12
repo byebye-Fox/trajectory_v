@@ -3,14 +3,15 @@ import React, { DetailedHTMLFactory }  from 'react'
 import { Drawer, Form, Button, Col, Row, Input, Select, DatePicker } from 'antd';
 
 
-import { PlusOutlined } from '@ant-design/icons';
+import { CodeSandboxOutlined, PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 class DetailDraw extends React.Component {
   state = { visible: false };
 
-  showDrawer = () => {
+  showDrawer = (e:any,msg:any) => {
+    console.log(e)
     this.setState({
       visible: true,
     });
@@ -25,7 +26,7 @@ class DetailDraw extends React.Component {
   render() {
     return (
       <>
-        <Button type="primary" onClick={this.showDrawer}>
+        <Button type="primary" id="thedetailshow" about = '' onClick={this.showDrawer.bind(this,'abc')}>
           <PlusOutlined /> New account
         </Button>
         <Drawer
