@@ -1,45 +1,21 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 使用文档说明
 
-## Available Scripts
+*算是先补一部分,补的部分表示的是之后不会再逻辑上或者别的一些相关的地方再进行大改.若问为啥,懒*
 
-In the project directory, you can run:
+## 首先是整体逻辑部分
 
-### `yarn start`
+整体的逻辑使用的是component +  container的形式.
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+LMAP的主要思想为:使用D3.js 在leaflet支持的地图转换过程,和底图加载手段之上,绘制出对应的各项结果.因为d3.js中不包含层的概念,但层的情况还是非常实用的,因此使用的是模拟的图层进行各层之间的绘制.
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+Lmap接受的各项参数中主要用来控制所绘制元素的就是mapdata,其中每个项都应当满足其格式,每个层中可以包含marker, line , 网格,heatmap其中的其中一种或者几种,注意mapdata的排列顺序即为这些图层的叠放顺序,分别对应其从底到最高层.
 
-### `yarn test`
+对于一些展示部分的逻辑,大体上是没有什么特别的很难的地方,毕竟其中大部分都只是简单的跳转逻辑之类的.visible bar之类的控制部件可以多补全,每个图层都绘制在一个对应的svg元素之中,因此可以很便捷的使用id来进行控制,如果有些地方不是很好进行处理,那么可以通过基础的JavaScript元素控制来进行实行.
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+现在下一步要处理的东西啊,一个是detail部分,这部分因为还没有完成其中的一些问题,所以暂时不是很能继续下去,所以下一步要做的主要是这几个部分:
 
-### `yarn build`
+1\首先是图表的问题,使用D3来进行的各项图表绘制问题,主要是几个比较基础常用的图,一个是pxel图,之后是箱式图,条形图,折线图,饼图,圆环图,这些图分别进行整体绘制方法的完善,之后需要处理其对应的各项样式的问题.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2\后端部分,后端部分有些数据处理和轨迹检索的逻辑还没有进行思考,另外就是数据逻辑的部分.
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-# trajectory_v
+3\符号化的问题,这周完成的都是一些核心的连锁功能,用来进行整体的逻辑处理和各项内容,目前系统的整体逻辑的拓展性挺高的,如果以后还有人来进行这部分的工作的话,应该是挺有用的.

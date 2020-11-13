@@ -80,28 +80,9 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 tempres2.push({latlng:[reslines[1][i][0] , reslines[1][i][1]] , attribute:5})
             }
 
-            resline.push({
-                markers:tempres1,
-                data:"This is the raw data",
-                name:"test1",
-                markerstyle:"circle",
-                markerfill:"red"
-            })
-            resline.push({
-                markers:tempres2,
-                data:"this is the second data",
-                name:"test2",
-                markerstyle:"circle",
-                markerfill:"green"
-            })
+           
 
-            resline.push({
-                data:"this is the second data",
-                name:"test3",
-                polylines:[reslines[2]],
-                polylinestyle:"lines",
-                polylinesfill:"red",
-            })
+           
 
             let lefttop = {"lat" :22.569486 , "lng" : 113.9403}
             let offsetlat =0.003
@@ -120,10 +101,6 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 }
             }
 
-
-            let lefttop2 = {
-                "lat" :24.569486 , "lng" : 115.9403
-            }
             let grids = [{
                 lefttop:lefttop,
                 offsetlat:offsetlat,
@@ -132,18 +109,32 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
                 color0:[0,0,0],
                 color1:[245,234,123],
                 opacity:0.5,
-            },
-            {
-                lefttop:lefttop2,
-                offsetlat:offsetlat,
-                offsetlng:offsetlng,
-                netdatas:netData,
-                color0:[1,2,3],
-                color1:[23,234,123],
-                opacity:0.5,
-            },
+            }
             ]   
+            //注意此处grids的整体数量,如果整体数量很大的话,不建议将结果放到同一个位置进行展示,如果非要这样做的话,基本结果就是内存爆炸,问题是这个内存爆炸不是因为我们绘图的问题,而是增量渲染的问题, 每个网格中包含其自身对应的消息,解决方法是有的,每次进行渲染不记录其中超多的数据,使用图形编码,记录其所点击的对应关系,进而数据被map所记录并进行操作,根据索引来进行检索事件,进而降低图形变化所带来的极大的前端压力.
             resline.push({'grids':grids ,name:"thegrids"})
+            resline.push({
+                data:"this is the second data",
+                name:"test3",
+                polylines:[reslines[2]],
+                polylinestyle:"lines",
+                polylinesfill:"red",
+            })
+            resline.push({
+                markers:tempres1,
+                data:"This is the raw data",
+                name:"test1",
+                markerstyle:"circle",
+                markerfill:"red"
+            })
+            resline.push({
+                markers:tempres2,
+                data:"this is the second data",
+                name:"test2",
+                markerstyle:"circle",
+                markerfill:"green"
+            })
+
             let resultshow = <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={resline}></MapContainer> 
             ReactDOM.render(resultshow ,document.getElementById("resultshow") )          
             console.log(resline)

@@ -1,0 +1,1 @@
+declare var Gloabl_detail :any

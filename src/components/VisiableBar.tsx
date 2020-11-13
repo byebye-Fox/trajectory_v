@@ -31,9 +31,13 @@ class VisiableBar extends React.Component<VisiableBarProps , {idlist:Array<[stri
                     console.log(value)
                     if (value[1] == true){
                         console.log("in")
-                        $(selectid).attr('opacity' , 1)    
+                       
+                        $(selectid).removeClass('disable')
+                        // $(selectid).attr('opacity' , 1)
                     }else{
-                        $(selectid).attr('opacity' , 0)
+                        $(selectid).addClass('disable') 
+                        
+                        // $(selectid).attr('opacity' , 0)
                     }
                 return this._addEle(value , index)
                 })
@@ -70,7 +74,7 @@ class VisiableBar extends React.Component<VisiableBarProps , {idlist:Array<[stri
         console.log(idList)
         let themenu =  <Menu>{this._genElement(idList)}</Menu>
 
-        return <Dropdown overlay={themenu} arrow ><TagsOutlined /></Dropdown>
+        return <Dropdown overlay={themenu} arrow ><Button>The Button Stuff</Button></Dropdown>
     }
     render(){
         return <div>

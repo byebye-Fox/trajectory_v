@@ -168,6 +168,13 @@ function _drawmaker(markers:Array<MarkerProps> , markerstyle:string,markerfill:s
     function onMapZoom() {
         adjustCircle();
     }
+
+    g.selectAll("circle").on("click" , function (){
+        //@ts-ignore
+        global.Gloabl_detail = d3.select(this)._groups[0][0].__data__
+        //在别的地方调用已经完成声明的全局变量时,记得使用global来进行检查,使用global命名空间会使得在进行变量声明检索的过程中率先检索global空间.
+        $('#thedetailshow').trigger('click')
+    })
     
     mymap.on('zoom', onMapZoom);
 }
@@ -229,6 +236,12 @@ function _drawlines(lines:Array<Array<[number , number]>>, polylinestyle:string 
     function onMapZoom() {
         adjustCircle();
     }
+    g.selectAll("path").on("click" , function (){
+        //@ts-ignore
+        global.Gloabl_detail = d3.select(this)._groups[0][0].__data__
+        //在别的地方调用已经完成声明的全局变量时,记得使用global来进行检查,使用global命名空间会使得在进行变量声明检索的过程中率先检索global空间.
+        $('#thedetailshow').trigger('click')
+    })
     
     mymap.on('zoom', onMapZoom);
 }
@@ -263,31 +276,30 @@ function _drawMap(Props:MapProps , mymap:any) {
                 let theone = D3Container(mymap , (onelayer.name + "layer" + i))
                 let svg = theone[0]
                 let g = theone[1]
-            if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
-            {
-                _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
-            }
-            if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
-            {
-                _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
-            }
-            if(onelayer.grids)
-            {
-                for(let i = 0 ; i < onelayer.grids.length ; i++)
+
+                if(onelayer.grids)
                 {
-                    _drawgrids(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
-                        onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity ,svg,g)
+                    for(let i = 0 ; i < onelayer.grids.length ; i++)
+                    {
+                        _drawgrids(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
+                            onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity ,svg,g)
+                    }
+                }else if(onelayer.aggregation)
+                {
+                    for(let i = 0 ; i < onelayer.aggregation.length ; i++)
+                    {   
+                        _drawaggregation(onelayer.aggregation[i].aggredata ,onelayer.aggregation[i].radius ,onelayer.aggregation[i].color0,
+                            onelayer.aggregation[i].color1,onelayer.aggregation[i].opacity,svg,g,mymap)
+                    }
                 }
-                
-            }
-            if(onelayer.aggregation)
-            {
-                for(let i = 0 ; i < onelayer.aggregation.length ; i++)
-                {   
-                    _drawaggregation(onelayer.aggregation[i].aggredata ,onelayer.aggregation[i].radius ,onelayer.aggregation[i].color0,
-                        onelayer.aggregation[i].color1,onelayer.aggregation[i].opacity,svg,g,mymap)
+                else if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
+                {
+                    _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
+                }else if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
+                {
+                    _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
                 }
-            }
+           
         }
     }
     // DrawNet("11" , "123" ,mymap)
@@ -296,6 +308,7 @@ function _drawMap(Props:MapProps , mymap:any) {
 
 function _drawaggregation( aggredata:Array<{lat:number;lng:number;count:number}>, radius:number, color0:Array<number>,
     color1:Array<number>, opacity:number,svg:any,g:any , mymap:any){
+    //热力图是每个aggredata的count代表着实际的含义
     let jsondata = new Array() 
 
     var a = d3.rgb(color0[0],color0[1] , color0[2])
@@ -382,7 +395,10 @@ function _drawaggregation( aggredata:Array<{lat:number;lng:number;count:number}>
                 .attr("r" , function(d:any){return (d.radius)})    
         })
         g.selectAll("circle").on("click" , function (){
-            $('#thedetailshow').trigger('click','tetet',"teteteasdf")
+            //@ts-ignore
+            global.Gloabl_detail = d3.select(this)._groups[0][0].__data__
+            //在别的地方调用已经完成声明的全局变量时,记得使用global来进行检查,使用global命名空间会使得在进行变量声明检索的过程中率先检索global空间.
+            $('#thedetailshow').trigger('click')
         })
         mymap.on('zoom', onMapZoom);
 }
@@ -491,13 +507,18 @@ function _drawgrids(netdatas:any , mymap:any , lefttop:any , offsetlat:number , 
     function onMapZoom() {
         adjustCircle();
     }
+
+    g.selectAll("rect").on("click" , function (){
+        //@ts-ignore
+        global.Gloabl_detail = d3.select(this)._groups[0][0].__data__
+        //在别的地方调用已经完成声明的全局变量时,记得使用global来进行检查,使用global命名空间会使得在进行变量声明检索的过程中率先检索global空间.
+        $('#thedetailshow').trigger('click')
+    })
+
     mymap.on('zoom', onMapZoom);
     
     
 }
-
-
-
 
 
 
