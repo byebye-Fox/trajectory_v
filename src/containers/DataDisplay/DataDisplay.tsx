@@ -1,15 +1,63 @@
 import React from 'react'
 import MapContainer from '../Map/Mapcontainer'
+import axios from 'axios'
+import { Button } from 'antd'
 
-class DataDisplay extends React.Component{
+class DataDisplay extends React.Component<{} , {themapdata:Array<any>}>{
+    constructor(props:any){
+        super(props)
+        this.state = {
+            themapdata:[]
+        }
 
+    }
 
+    setclick = async ()=>{
+            await axios.post(`http://127.0.0.1:8000/datadisplay/`)
+            .then(
+                res=>{
+                  
+                   let thelist = eval(res.data)
+                   console.log(thelist)
+                   console.log(typeof(thelist))
 
+                   let resline = []
+                   let tempres1 = []
 
+                   for(let i = 0 ; i < thelist[0].length ; i++)
+                   {   
+                       tempres1.push({latlng:[thelist[0][i][0] , thelist[0][i][1]] , attribute:5})
+                   }
 
+                   let tempres2 = []
 
+                   for(let i = 0 ; i < thelist[1].length ; i++)
+                   {   
+                       tempres2.push({latlng:[thelist[1][i][0] , thelist[1][i][1]] , attribute:5})
+                   }
 
+                   resline.push({
+                    markers:tempres1,
+                    data:"This is the raw data",
+                    name:"201612",
+                    markerstyle:"circle",
+                    markerfill:"red"
+                })
 
+                resline.push({
+                    markers:tempres2,
+                    data:"this is the second data",
+                    name:"New",
+                    markerstyle:"circle",
+                    markerfill:"green"
+                })
+
+                this.setState({
+                    themapdata:resline
+                })
+                }
+            )
+        }
 
 
     render()
@@ -2023,15 +2071,18 @@ class DataDisplay extends React.Component{
             }
         ]
 
+
+
+
         var resline = [
             {
-                aggregation:aggredata,
-                name:"theaggre"
+                
             }
         ]
         return (
             <div className="height100row" id="theresultshow">
-               <MapContainer center={[39.988585,116.191031]} zoom={14} container="filestationtest" mapData={resline}></MapContainer> 
+                <Button onClick={this.setclick}> This is the boar</Button>
+                <MapContainer center={[22.53500,114.007]} zoom={14} container="filestationtest" mapData={this.state.themapdata}></MapContainer> 
             </div>
         )
     }

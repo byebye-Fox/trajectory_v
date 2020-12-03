@@ -25,26 +25,25 @@ class Datacleaning extends React.Component<{},stateProps>{
         // })
         //请求得到数据列表,获取整体的结果,生成对应的dropdown,之后进行生成,最后把结果展示在对应的位置上
         this.state={
-            datasets : ["the1" , " the2" , " the3"],
+            datasets : [],
         }        
     }
 
     componentDidMount(){
-        axios({
-            url:'http://127.0.0.1:8000/getsetlist/',
-            method:'post',
-        })
-        .then(res =>{   
-            //@ts-ignore
-            let setlist = eval(res.data.datalist)
-            console.log(typeof(setlist))
-            console.log(setlist)
-            this.setState({
-                datasets:setlist
-            })
-        })
+            if(localStorage.currentuser)
+            {   
+                let datalist = localStorage.Usersets.split(',')
+                //@ts-ignore
+                let setlist = eval(datalist)
+                this.setState({
+                    datasets:setlist
+                })
+            }
+            else{
+                alert("There is no alaviable datasets , Please try again after login")
+            }
+             
     }
-
 
     _genElement = (values:Array<string>)=>{
         return values.map((value:any , index:any) => {
@@ -128,13 +127,9 @@ class Datacleaning extends React.Component<{},stateProps>{
                                         <Button htmlType='submit' >Start</Button>
                                     </Form.Item>
                                 </Row>
-
-                               
                             </Form>
                         </Card>
-
                     </Col>
-
                 </Row> 
             </div>
         )

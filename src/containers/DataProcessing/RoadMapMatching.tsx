@@ -19,19 +19,20 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
         
     }
 
-
     componentDidMount(){
-        axios({
-            url:'http://127.0.0.1:8000/getsetlist/',
-            method:'post',
-        })
-        .then(res =>{   
+        if(localStorage.currentuser)
+        {   
+            let datalist = localStorage.Usersets.split(',')
             //@ts-ignore
-            let setlist = eval(res.data.datalist)
+            let setlist = eval(datalist)
             this.setState({
                 datasets:setlist
             })
-        })
+        }
+        else{
+            alert("There is no alaviable datasets , Please try again after login")
+        }
+         
     }
 
     _genElement = (values:Array<string>)=>{
@@ -62,9 +63,6 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
             })
             let reslines = eval(res.data)
             let resline:any = []
-            let len1 = reslines[0].length
-            let len2 = reslines[1].length
-            let len3 = reslines[2].length
 
             let tempres1:any = []
             let tempres2:any = []
@@ -79,10 +77,6 @@ class RoadMapMatching extends React.Component<{} ,{datasets:Array<string>,isload
             {   
                 tempres2.push({latlng:[reslines[1][i][0] , reslines[1][i][1]] , attribute:5})
             }
-
-           
-
-           
 
             let lefttop = {"lat" :22.569486 , "lng" : 113.9403}
             let offsetlat =0.003

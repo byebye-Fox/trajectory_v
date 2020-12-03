@@ -248,11 +248,12 @@ function _drawlines(lines:Array<Array<[number , number]>>, polylinestyle:string 
 
 function _drawMap(Props:MapProps , mymap:any) {
     var normalm = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',{
-            id: 'mapbox.streets', 
-            style: 'mapbox://styles/mapbox/streets-v12',
-            maxZoom: Props.zoom+3,
-            minZoom: Props.zoom/2
-        })
+        id: 'mapbox.streets', 
+        
+        style: 'mapbox://styles/mapbox/streets-v12',
+        maxZoom: Props.zoom+3,
+        minZoom: Props.zoom/2
+    })
     var normal = L.layerGroup([normalm]);
     mymap =new L.Map(Props.container,
     {
@@ -273,59 +274,90 @@ function _drawMap(Props:MapProps , mymap:any) {
         for(let i = 0; i <Props.mapData.length ; i ++)
         {
             let onelayer = Props.mapData[i]
-                let theone = D3Container(mymap , (onelayer.name + "layer" + i))
-                let svg = theone[0]
-                let g = theone[1]
+            let theone = D3Container(mymap , (onelayer.name + "layer" + i))
+            let svg = theone[0]
+            let g = theone[1]
 
-                if(onelayer.grids)
+            if(onelayer.grids)
+            {
+                for(let i = 0 ; i < onelayer.grids.length ; i++)
                 {
-                    for(let i = 0 ; i < onelayer.grids.length ; i++)
-                    {
-                        _drawgrids(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
-                            onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity ,svg,g)
-                    }
-                }else if(onelayer.aggregation)
-                {
-                    for(let i = 0 ; i < onelayer.aggregation.length ; i++)
-                    {   
-                        _drawaggregation(onelayer.aggregation[i].aggredata ,onelayer.aggregation[i].radius ,onelayer.aggregation[i].color0,
-                            onelayer.aggregation[i].color1,onelayer.aggregation[i].opacity,svg,g,mymap)
-                    }
+                    _drawgrids(onelayer.grids[i].netdatas , mymap ,onelayer.grids[i].lefttop ,onelayer.grids[i].offsetlat,
+                        onelayer.grids[i].offsetlng , onelayer.grids[i].color0 , onelayer.grids[i].color1 , onelayer.grids[i].opacity ,svg,g)
                 }
-                else if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
-                {
-                    _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
-                }else if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
-                {
-                    _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
+            }else if(onelayer.aggregation)
+            {
+                for(let i = 0 ; i < onelayer.aggregation.length ; i++)
+                {   
+                    _drawaggregation(onelayer.aggregation[i].aggredata ,onelayer.aggregation[i].radius ,onelayer.aggregation[i].color0,
+                        onelayer.aggregation[i].color1,onelayer.aggregation[i].opacity,svg,g,mymap)
                 }
-           
+            }
+            else if(onelayer.polylines && onelayer.polylinesfill && onelayer.polylinestyle)
+            {
+                _drawlines(onelayer.polylines , onelayer.polylinestyle , onelayer.polylinesfill ,svg,g,mymap)
+            }else if(onelayer.markers && onelayer.markerstyle && onelayer.markerfill)
+            {
+                _drawmaker(onelayer.markers , onelayer.markerstyle, onelayer.markerfill ,svg , g ,mymap)
+            }
+        
         }
     }
     // DrawNet("11" , "123" ,mymap)
     return mymap
 }
 
+
+//针对热力图的结果，需要进行以下的数据处理，首先因为轨迹数据问题，重叠问题是暂时无法解决的，最好的处理办法是进行连通性检查，根据连通性重新绘制path，之后再进行径向渐变。而这种层叠行驶的话，
 function _drawaggregation( aggredata:Array<{lat:number;lng:number;count:number}>, radius:number, color0:Array<number>,
     color1:Array<number>, opacity:number,svg:any,g:any , mymap:any){
     //热力图是每个aggredata的count代表着实际的含义
     let jsondata = new Array() 
 
+    
+    function compare(a:any , b:any ){
+        return a.count - b.count
+    }
+
+    let thedata = aggredata.sort(compare)
+
     var a = d3.rgb(color0[0],color0[1] , color0[2])
     var b = d3.rgb(color1[0] , color1[1] , color1[2])
     var compute = d3.interpolate(a,b)
 
-    for(let i = 0 ; i < aggredata.length ; i++)
+    for(let i = 0 ; i < thedata.length ; i++)
     {
         let caculateradius = radius
         //辐射半径计算需要另行进行计算,其计算方法按下不表,先使用简单的方法进行.
         jsondata.push({
-            "x_axis":aggredata[i].lat,
-            "y_axis":aggredata[i].lng,
+            "x_axis":thedata[i].lat,
+            "y_axis":thedata[i].lng,
             "radius":caculateradius,  
-            "fill": compute(aggredata[i].count/100)
+            "fill": compute(thedata[i].count/100)
         })
     }
+
+    var grads = svg.append("defs").selectAll("radialGradient")
+    .data(jsondata)
+    .enter()
+    .append("radialGradient")
+    .attr("gradientUnits", "objectBoundingBox")
+    .attr("r", "100%")
+    .attr("id", function(d:any, i:any) { return color1.toString() + color0.toString() + "grad" + i; })
+
+   
+    grads.append("stop")
+        .attr("offset", "0%")
+        .style("stop-color", function(d:any){
+            return d.fill;
+        })
+        .style("stop-opacity" , 1)
+
+    
+    grads.append("stop")
+        .attr("offset", "80%")
+        .style("stop-color", "white")
+        .style("stop-opacity" , 0)
 
     var t = g.selectAll('circle').data(jsondata)
     var rectAttribute =
@@ -335,41 +367,44 @@ function _drawaggregation( aggredata:Array<{lat:number;lng:number;count:number}>
         .attr("cx", function(d:any) {  return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).x; })
         .attr("cy", function(d:any) { return mymap.latLngToLayerPoint(L.latLng(d.x_axis, d.y_axis)).y; })
         .attr("r", function(d:any) { return d.radius; })
-        .style("fill", function(d:any,i:any) { return d.fill;});
+        // .style("fill", function(d:any,i:any) { return d.fill;});
+        .style("fill",   function(d:any , i :any){
+            return "url(#" +  color1.toString() + color0.toString() + "grad" + i + ")"; 
+        });
 
-        var defs = svg.append("defs");
-        // 添加模糊滤镜
-        var filterBlur = defs.append('filter')
-        .attr('id', 'filterBlur')
-        .attr('x', -1.2)
-        .attr('y', -1.2)
-        .attr('width', 4)
-        .attr('height', 4);
-        // 添加辅助滤镜
-        filterBlur.append('feOffset')
-        .attr('result', 'offOut')
-        .attr('in', 'SourceGraphic')
-        .attr('dx', 4)
-        .attr('dy', 5);
-        // 添加模糊滤镜
-        filterBlur.append('feGaussianBlur')
-        .attr('result', 'blurOut')
-        .attr('in', 'SourceGraphic')
-        .attr('stdDeviation', 20);
-        // 添加辅助滤镜
-        filterBlur.append('feBlend')
-        .attr('in', 'SourceGraphic')
-        .attr('in2', 'blurOut')
-        .attr('mode', 'multiply');
+        // var defs = svg.append("defs");
+        // // 添加模糊滤镜
+        // var filterBlur = defs.append('filter')
+        // .attr('id', 'filterBlur')
+        // .attr('x', -1.2)
+        // .attr('y', -1.2)
+        // .attr('width', 4)
+        // .attr('height', 4);
+        // // 添加辅助滤镜
+        // filterBlur.append('feOffset')
+        // .attr('result', 'offOut')
+        // .attr('in', 'SourceGraphic')
+        // .attr('dx', 4)
+        // .attr('dy', 5);
+        // // 添加模糊滤镜
+        // filterBlur.append('feGaussianBlur')
+        // .attr('result', 'blurOut')
+        // .attr('in', 'SourceGraphic')
+        // .attr('stdDeviation', 20);
+        // // 添加辅助滤镜
+        // filterBlur.append('feBlend')
+        // .attr('in', 'SourceGraphic')
+        // .attr('in2', 'blurOut')
+        // .attr('mode', 'multiply');
     
-        var defs2 = svg.append("defs")
-        var filterBlur2 = defs2.append("filter")
-        .attr("id" , "filterBlur2")
-        filterBlur2.append("feGaussianBlur")
-        .attr("in" , "SourceGraphic")
-        .attr("stdDeviation" , 20)
+        // var defs2 = svg.append("defs")
+        // var filterBlur2 = defs2.append("filter")
+        // .attr("id" , "filterBlur2")
+        // filterBlur2.append("feGaussianBlur")
+        // .attr("in" , "SourceGraphic")
+        // .attr("stdDeviation" , 20)
     
-        svg.style('filter', 'url(#filterBlur2')
+        // svg.style('filter', 'url(#filterBlur2')
 
 
 

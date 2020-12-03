@@ -21,6 +21,7 @@ class Fileupload extends React.Component<fileProps,{}>{
             }
             if (status === 'done') {
               message.success(`${info.file.name} file uploaded successfully.`);
+              alert("some thing happened")
             } else if (status === 'error') {
               message.error(`${info.file.name} file upload failed.`);
             }
